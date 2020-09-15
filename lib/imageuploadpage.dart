@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ImageUpload/imageregistationpage.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,7 @@ class _ImageUploadPage extends State<ImageUploadPage> {
   File file;
   String postid = Uuid().v4();
   bool isloading = false;
+  String mediaurl;
   _getimage(BuildContext context, ImageSource source) {
     ImagePicker.pickImage(source: source, maxHeight: 400).then((File image) {
       setState(() {
@@ -100,7 +102,7 @@ class _ImageUploadPage extends State<ImageUploadPage> {
                                 )
                               : Image(
                                   image: NetworkImage(
-                                      'https://firebasestorage.googleapis.com/v0/b/image-upload-6a8b8.appspot.com/o/post_3c0d09f3-ba55-4de4-9f6f-00d7f0a4fa77.jpg?alt=media&token=05964063-5375-4e8a-adc5-10a86371d0a3'),
+                                      'https://image.freepik.com/free-vector/man-profile-cartoon_18591-58482.jpg'),
                                   fit: BoxFit.cover,
                                 )),
                     ),
@@ -140,17 +142,24 @@ class _ImageUploadPage extends State<ImageUploadPage> {
     });
     await compressImage();
     String mediaUrl = await uploadImage(file);
-    setState(() {
-      isloading = false;
-      clearImage();
-    });
+    // setState(() {
+    //   isloading = false;
+    //   clearImage();
+    // });
   }
+
+  Map<String, dynamic> addurl = {
+    'url': null,
+  };
+  List<ImageRegistation> _imageRegistation = [];
 
   clearImage() {
     setState(() {
       file = null;
     });
   }
+
+  uploadpicinrealtime() {}
 
   compressImage() async {
     final temDir = await getTemporaryDirectory();
@@ -168,9 +177,8 @@ class _ImageUploadPage extends State<ImageUploadPage> {
         storageRef.child('post_$postid.jpg').putFile(imageFile);
 
     StorageTaskSnapshot storagesnap = await uploadTask.onComplete;
-    String downloadurl = await storagesnap.ref.getDownloadURL();
-    print(downloadurl);
-
-    return downloadurl;
+    mediaurl = await storagesnap.ref.getDownloadURL();
+    addurl['url'] = mediaurl;
+    return mediaurl;
   }
 }
