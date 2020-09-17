@@ -1,12 +1,13 @@
 import 'dart:io';
-
-import 'package:ImageUpload/imageregistationpage.dart';
+import 'package:ImageUpload/model.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import './model.dart';
 import 'package:image/image.dart' as Im;
 
 class ImageUploadPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _ImageUploadPage extends State<ImageUploadPage> {
   String postid = Uuid().v4();
   bool isloading = false;
   String mediaurl;
+
   _getimage(BuildContext context, ImageSource source) {
     ImagePicker.pickImage(source: source, maxHeight: 400).then((File image) {
       setState(() {
@@ -75,83 +77,89 @@ class _ImageUploadPage extends State<ImageUploadPage> {
 
   @override
   Widget build(BuildContext context) {
+    Modelclass model = Provider.of<Modelclass>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('UPload image'),
-      ),
-      body: Column(
-        children: [
-          isloading ? LinearProgressIndicator() : Text(''),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+        appBar: AppBar(
+          title: Text('UPload image'),
+        ),
+        body: SingleChildScrollView(
+          child: Column(
             children: [
-              Container(
-                  margin: EdgeInsets.only(left: 50, top: 50),
-                  width: 240,
-                  height: 200,
-                  child: CircleAvatar(
-                    radius: 80,
-                    child: ClipOval(
-                      child: SizedBox(
-                          height: 180,
-                          width: 180,
-                          child: (file != null)
-                              ? Image.file(
-                                  file,
-                                  fit: BoxFit.cover,
-                                )
-                              : Image(
-                                  image: NetworkImage(
-                                      'https://image.freepik.com/free-vector/man-profile-cartoon_18591-58482.jpg'),
-                                  fit: BoxFit.cover,
-                                )),
+              isloading ? LinearProgressIndicator() : Text(''),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                      margin: EdgeInsets.only(left: 50, top: 50),
+                      width: 240,
+                      height: 200,
+                      child: CircleAvatar(
+                        radius: 80,
+                        child: ClipOval(
+                          child: SizedBox(
+                              height: 180,
+                              width: 180,
+                              child: (file != null)
+                                  ? Image.file(
+                                      file,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image(
+                                      image: NetworkImage(
+                                          'https://image.freepik.com/free-vector/man-profile-cartoon_18591-58482.jpg'),
+                                      fit: BoxFit.cover,
+                                    )),
+                        ),
+                      )),
+                  Container(
+                    padding: EdgeInsets.only(top: 160),
+                    child: IconButton(
+                      icon: Icon(FontAwesomeIcons.camera),
+                      onPressed: () {
+                        _selecteimage();
+                      },
                     ),
-                  )),
-              Container(
-                padding: EdgeInsets.only(top: 160),
-                child: IconButton(
-                  icon: Icon(FontAwesomeIcons.camera),
-                  onPressed: () {
-                    _selecteimage();
-                  },
-                ),
+                  ),
+                ],
               ),
+              SizedBox(
+                height: 50,
+              ),
+              Container(
+                  color: Colors.orange,
+                  child: FlatButton(
+                      onPressed: isloading
+                          ? null
+                          : () {
+                              handelsubmit(model.uploadimageurl);
+                            },
+                      child: Text('submit')))
             ],
           ),
-          SizedBox(
-            height: 50,
-          ),
-          Container(
-            color: Colors.orange,
-            child: FlatButton(
-                onPressed: isloading
-                    ? null
-                    : () {
-                        handelsubmit();
-                      },
-                child: Text('submit')),
-          )
-        ],
-      ),
-    );
+        ));
   }
 
-  handelsubmit() async {
+  handelsubmit(Function uploadimage) async {
     setState(() {
       isloading = true;
     });
     await compressImage();
     String mediaUrl = await uploadImage(file);
+
     // setState(() {
     //   isloading = false;
     //   clearImage();
     // });
+    uploadimage(mediaUrl);
+    setState(() {
+      databaseupload();
+      isloading = false;
+    });
   }
 
   Map<String, dynamic> addurl = {
     'url': null,
   };
-  List<ImageRegistation> _imageRegistation = [];
 
   clearImage() {
     setState(() {
@@ -159,7 +167,7 @@ class _ImageUploadPage extends State<ImageUploadPage> {
     });
   }
 
-  uploadpicinrealtime() {}
+  databaseupload() {}
 
   compressImage() async {
     final temDir = await getTemporaryDirectory();
@@ -175,7 +183,6 @@ class _ImageUploadPage extends State<ImageUploadPage> {
   Future<String> uploadImage(imageFile) async {
     StorageUploadTask uploadTask =
         storageRef.child('post_$postid.jpg').putFile(imageFile);
-
     StorageTaskSnapshot storagesnap = await uploadTask.onComplete;
     mediaurl = await storagesnap.ref.getDownloadURL();
     addurl['url'] = mediaurl;
