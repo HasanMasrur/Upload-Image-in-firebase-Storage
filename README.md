@@ -2,6 +2,13 @@
 
 A new Flutter project.
 
+# package 
+
+https://pub.dev/packages/firebase_storage
+https://pub.dev/packages/path_provider
+https://pub.dev/packages/uuid
+https://pub.dev/packages/image
+https://pub.dev/packages/provider
 ## Getting Started
 
 This project is a starting point for a Flutter application.
